@@ -11,11 +11,7 @@ def get_paginated(model: models.Base, offset: int, limit: int):
     return select(model).offset(offset).limit(limit)
 
 
-async def get_cities(
-        limit: int,
-        offset: int,
-        session: AsyncSession
-):
+async def get_cities(limit: int, offset: int, session: AsyncSession):
     stmt = get_paginated(models.City, offset, limit)
 
     cities_list = await session.execute(stmt)
@@ -23,23 +19,17 @@ async def get_cities(
 
 
 async def retrieve_city(
-        id: int,
-        session: AsyncSession,
+    id: int,
+    session: AsyncSession,
 ):
     stmt = select(models.City).filter(models.City.id == id)
     author = await session.execute(stmt)
     if not author.first():
-        raise HTTPException(
-            status_code=404,
-            detail="City not found"
-        )
+        raise HTTPException(status_code=404, detail="City not found")
     return author.first()[0]
 
 
-async def create_city(
-        city: schemas.CityCreate,
-        session: AsyncSession
-):
+async def create_city(city: schemas.CityCreate, session: AsyncSession):
     stmt = insert(models.City).values(
         name=city.name,
         additional_info=city.additional_info,
@@ -51,33 +41,23 @@ async def create_city(
 
 
 async def update_city(
-        id: int,
-        city: schemas.CityBase,
-        session: AsyncSession,
+    id: int,
+    city: schemas.CityBase,
+    session: AsyncSession,
 ):
-    stmt = (
-        update(models.City).
-        where(models.City.id == id).
-        values(**city)
-    )
+    stmt = update(models.City).where(models.City.id == id).values(**city)
     author = await session.execute(stmt)
     if not author.first():
-        raise HTTPException(
-            status_code=404,
-            detail="City not found"
-        )
+        raise HTTPException(status_code=404, detail="City not found")
     return author.first()[0]
 
 
 async def delete_city(
-        id: int,
-        session: AsyncSession,
+    id: int,
+    session: AsyncSession,
 ):
     stmt = delete(models.City).where(models.City.id == id)
     author = await session.execute(stmt)
     if not author.first():
-        raise HTTPException(
-            status_code=404,
-            detail="City not found"
-        )
+        raise HTTPException(status_code=404, detail="City not found")
     return author.first()[0]

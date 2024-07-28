@@ -15,4 +15,3 @@ class Temperature(Base):
 
     def __repr__(self):
         return f"{self.n} - {self.datetime}"
-

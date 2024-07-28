@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Annotated
 
 from fastapi import APIRouter, Depends
 from httpx import AsyncClient
@@ -11,39 +11,32 @@ from src.database import get_async_session
 router = APIRouter()
 
 
+async def paginate_parameters(
+        offset: int = 0, limit: int = 100
+) -> dict:
+    return {"offset": offset, "limit": limit}
+
+
+PaginateDep = Annotated[dict, Depends(paginate_parameters)]
+
+
 @router.get("/temperatures/update/")
 async def fetch_temperatures(
-        client: AsyncClient() = Depends(get_async_client),
-        session: AsyncSession = Depends(get_async_session),
-
-):
-    return await fetch_temperature(
-        session=session,
-        client=client
-    )
-
-
-@router.get("/temperatures/updae/")
-async def fetch_temperatures(
-    city: str,
-    client: AsyncClient() = Depends(get_async_client)
-):
-    res = await client.get(
-        url="https://api.openweathermap.org/data/2.5/weather",
-        params={'units': 'metric', "q": f"{city}", 'lang': 'ru', 'APPID': "a7a7fbefc785e02a7434d574acba0433"}
-    )
-    if res.status_code == 200:
-        return res.json()
-    return {"result": "City not found"}
+    client: AsyncClient() = Depends(get_async_client),
+    session: AsyncSession = Depends(get_async_session),
+) -> Dict[str, str]:
+    return await fetch_temperature(session=session, client=client)
 
 
 @router.get("/temperatures/", response_model=List[schemas.Temperature])
 async def get_temperatures(
-        city_id: int,
-        session: AsyncSession = Depends(get_async_session),
+    city_id: int,
+    paginate_params: PaginateDep,
+    session: AsyncSession = Depends(get_async_session),
 
-):
+) -> List[schemas.Temperature]:
     return await crud.get_temperature(
         session=session,
-        city_id=city_id
+        city_id=city_id,
+        **paginate_params
     )
